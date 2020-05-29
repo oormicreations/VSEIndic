@@ -78,7 +78,7 @@ It should show the default text rendered in Preview.
 
 Enter your text in the text box, or paste it there, and click the **Create Indic Text** button.
 
-To display line breaks, just insert **\n** in the text. If the pasted text has line breaks, they will be used. To get italics or underlined text you can use standard HTML style markup like **<i>xyz</i>** and **<u>xyz</u>**.
+To display line breaks, just insert **\n** in the text. If the pasted text has line breaks, they will be used. To get italics or underlined text you can use standard HTML style markup like `<i>xyz</i>` and `<u>xyz</u>`.
 
 _The pasted text may not appear in the text box correctly, or can appear as boxes, but nothing to worry, the addon will render it correctly._
 
