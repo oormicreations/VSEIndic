@@ -34,7 +34,7 @@ from bpy.types import (Panel,
 import os
 #import stat
 from bpy import context
-#import codecs
+import codecs
 #import shutil
 import platform
 from datetime import datetime
@@ -60,7 +60,7 @@ def popfonts(self, context):
     return val
 
 
-def createindictext(tool, update):
+def createindictext(tool, update, imp):
     dir = bpy.path.abspath("//")
     outdir = dir + "vseindic"
     if not os.path.exists(outdir):
@@ -68,9 +68,14 @@ def createindictext(tool, update):
     today = datetime.now()
     #fname = today.strftime("%d/%m/%Y %H:%M:%S")
     fname = today.strftime("%Y%m%d%H%M%S") + ".png"
+    
     if update:
         seq = bpy.context.scene.sequence_editor.active_strip
         fname = seq.elements[0].filename
+        
+    if imp is not None:
+        fname = str(imp) + ".png"
+        
     fpath = dir + "vseindic/" + fname
     
     w = bpy.context.scene.render.resolution_x * tool.in_width /100.0
@@ -97,41 +102,47 @@ def createindictext(tool, update):
     image.write_to_file(fpath)
 
     if not update:
-        bpy.ops.sequencer.image_strip_add(directory= outdir + "/", files=[{"name":fname, "name":fname}], frame_start=bpy.context.scene.frame_current, frame_end=bpy.context.scene.frame_current+tool.in_dur, channel=1)
+        bpy.ops.sequencer.image_strip_add(directory= outdir + "/", 
+            files=[{"name":fname, "name":fname}], 
+            frame_start=bpy.context.scene.frame_current, 
+            frame_end=bpy.context.scene.frame_current+tool.in_dur, 
+            channel=1)
+    
     
     #auto center and duration update
     seq = bpy.context.scene.sequence_editor.active_strip
-    seq.frame_final_duration = seq.frame_start + tool.in_dur
+    seq.frame_final_duration = tool.in_dur
     seq.use_translation = tool.in_off
     seq.transform.offset_x = (bpy.context.scene.render.resolution_x)/2 - (image.width/2) 
     seq.transform.offset_y = (bpy.context.scene.render.resolution_y)/2 - (image.height/2)
+
+    #set current frame to position next image
+    bpy.context.scene.frame_current = bpy.context.scene.frame_current+tool.in_dur
+
     
     return fname
 
-def createshape(tool, update):
-    dir = bpy.path.abspath("//")
-    outdir = dir + "vseindic"
-    if not os.path.exists(outdir):
-        os.mkdir(outdir)
-    today = datetime.now()
-    #fname = today.strftime("%d/%m/%Y %H:%M:%S")
-    fname = today.strftime("%Y%m%d%H%M%S") + ".png"
-    if update:
-        seq = bpy.context.scene.sequence_editor.active_strip
-        fname = seq.elements[0].filename
-    fpath = dir + "vseindic/" + fname
-    
-    image = pyvips.Image.black(500, 500)
-    if tool.in_shape == "Rectangle":
-        image = image.draw_rect(255, 0,0, 200,100,fill=True)
-        
-    image = image.ifthenelse([255, 255, 255, 255], [0, 0, 0, 0], blend=True)
-    image = image.copy(interpretation="srgb")
-    image = image*[tool.in_color[0], tool.in_color[1], tool.in_color[2], tool.in_color[3]]        
-    image.write_to_file(fpath)
 
-    if not update:
-        bpy.ops.sequencer.image_strip_add(directory= outdir + "/", files=[{"name":fname, "name":fname}], frame_start=bpy.context.scene.frame_current, frame_end=bpy.context.scene.frame_current+tool.in_dur, channel=1)
+
+def importtext(tool, txtfile):
+    print("~Txtfile~",txtfile)
+    
+    sep = tool.in_sep
+    if tool.in_sep == "\\n":
+        sep = '\n'
+        print("~Sep~",sep)
+        
+    temp = codecs.open(txtfile, "r", "utf-8")
+    str = temp.read()
+    temp.close()
+    lines = str.split(sep, 999)
+    
+    for n in range(0,len(lines)):
+        print(n,">>>>", lines[n])
+        if lines[n] != "":
+            tool.in_text = lines[n]
+            createindictext(tool, False, n+1)
+
 
 # Operators ###########################################
 
@@ -143,7 +154,7 @@ class CCI_OT_CCreateIndic(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
         intool = scene.in_tool
-        createindictext(intool, False)
+        createindictext(intool, False, None)
         
         return{'FINISHED'}
 
@@ -159,7 +170,7 @@ class CUC_OT_CUpdateCurrent(bpy.types.Operator):
         seq = bpy.context.scene.sequence_editor.active_strip
         if seq is not None:
             if seq.type == "IMAGE":
-                createindictext(intool, True)
+                createindictext(intool, True, None)
             else:
                 ShowMessageBox("Please select a strip of type 'Image'")
         else:
@@ -186,17 +197,22 @@ class COF_OT_COpenFont(bpy.types.Operator):
         return {'RUNNING_MODAL'}    
 
 
-class CCS_OT_CCreateShape(bpy.types.Operator):
-    bl_idname = "create.shape"
-    bl_label = "Create Shape"
-    bl_description = "Create shapes."
+class CIM_OT_CImport(bpy.types.Operator):
+    bl_idname = "import.text"
+    bl_label = "Import Text"
+    bl_description = "Import text from a file"
+    filepath: bpy.props.StringProperty(subtype="FILE_PATH")
 
     def execute(self, context):
         scene = context.scene
         intool = scene.in_tool
-        createshape(intool, False)
+        importtext(intool, self.filepath)
         
         return{'FINISHED'}
+    
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}    
 
 
     
@@ -233,14 +249,17 @@ class OBJECT_PT_InPanel(bpy.types.Panel):
         row.prop(intool, "in_color")
         row.prop(intool, "in_blur")
         
+        layout.label(text = " ")
         layout.prop(intool, "in_off")
 
         layout.operator("create.indic", text = "Create Indic Text", icon='TEXT')
         layout.operator("update.current", text = "Update Current Text", icon='FILE_TICK')
         
         row = layout.row(align=True)
-        row.prop(intool, "in_shape")
-        row.operator("create.shape", text = "Create Shape", icon='FILE_TICK')
+        row.prop(intool, "in_sep")
+        row.operator("import.text", text = "Import Text", icon='TEXT')
+        
+        layout.label(text = " ")
         row = layout.row(align=True)
         row.operator("wm.url_open", text="Help | Source | Updates", icon='QUESTION').url = "https://github.com/oormicreations/VSEIndic"
 
@@ -309,10 +328,9 @@ class CCProperties(PropertyGroup):
         name = ""
     ) 
 
-    in_shape: EnumProperty(
-        items = [("Line","Line",""),("Rectangle","Rectangle",""),("Circle","Circle","")],
-        default = "Rectangle",
-        name = ""
+    in_sep: StringProperty(
+        default = ";",
+        name = "Separator"
     ) 
     
     in_color: FloatVectorProperty(
@@ -334,7 +352,7 @@ classes = (
     CCI_OT_CCreateIndic,
     COF_OT_COpenFont,
     CUC_OT_CUpdateCurrent,
-    CCS_OT_CCreateShape
+    CIM_OT_CImport
 )
 
 def register():
