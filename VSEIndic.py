@@ -117,7 +117,8 @@ def createindictext(tool, update, imp):
     seq.transform.offset_y = (bpy.context.scene.render.resolution_y)/2 - (image.height/2)
 
     #set current frame to position next image
-    bpy.context.scene.frame_current = bpy.context.scene.frame_current+tool.in_dur
+    if not update:
+        bpy.context.scene.frame_current = bpy.context.scene.frame_current+tool.in_dur
 
     
     return fname
