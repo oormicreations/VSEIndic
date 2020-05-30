@@ -6,7 +6,7 @@ bl_info = {
     "name": "VSE Indic",
     "description": "Renders Indic Text in VSE",
     "author": "Oormi Creations",
-    "version": (0, 1, 0),
+    "version": (0, 1, 1),
     "blender": (2, 80, 0),
     "location": "Video Sequencer > VSE Indic",
     "warning": "", # used for warning icon and text in addons panel
@@ -74,7 +74,7 @@ def createindictext(tool, update, imp):
         fname = seq.elements[0].filename
         
     if imp is not None:
-        fname = str(imp) + ".png"
+        fname = imp + ".png"
         
     fpath = dir + "vseindic/" + fname
     
@@ -106,7 +106,7 @@ def createindictext(tool, update, imp):
             files=[{"name":fname, "name":fname}], 
             frame_start=bpy.context.scene.frame_current, 
             frame_end=bpy.context.scene.frame_current+tool.in_dur, 
-            channel=1)
+            channel=tool.in_track)
     
     
     #auto center and duration update
@@ -117,7 +117,7 @@ def createindictext(tool, update, imp):
     seq.transform.offset_y = (bpy.context.scene.render.resolution_y)/2 - (image.height/2)
 
     #set current frame to position next image
-    if not update:
+    if imp is not None:
         bpy.context.scene.frame_current = bpy.context.scene.frame_current+tool.in_dur
 
     
@@ -127,22 +127,39 @@ def createindictext(tool, update, imp):
 
 def importtext(tool, txtfile):
     print("~Txtfile~",txtfile)
-    
+    prefix = bpy.path.basename(txtfile)
+
     sep = tool.in_sep
     if tool.in_sep == "\\n":
         sep = '\n'
         print("~Sep~",sep)
         
     temp = codecs.open(txtfile, "r", "utf-8")
-    str = temp.read()
+    tstr = temp.read()
     temp.close()
-    lines = str.split(sep, 999)
+    lines = tstr.split(sep, 999)
+    print(lines)
+    
+    if len(lines)<2:
+        if lines[0] == "":
+            lines = ["The file seems to be empty!"]
+
+    #calc duration from range
+    if tool.in_fit:
+        bpy.context.scene.frame_current = tool.in_fit1
+        tool.in_dur = 1 + (abs(tool.in_fit2 - tool.in_fit1))/len(lines)
+        if tool.in_dur < 1:
+            tool.in_dur = 1
     
     for n in range(0,len(lines)):
+        lines[n] = lines[n].strip()
+        lines[n] = lines[n].strip('\n')
+        
         print(n,">>>>", lines[n])
-        if lines[n] != "":
+        if lines[n] != "" or lines[n] != " " or lines[n] != "\n":
             tool.in_text = lines[n]
-            createindictext(tool, False, n+1)
+            id = str(n + 1)
+            createindictext(tool, False, prefix + "_" + id)
 
 
 # Operators ###########################################
@@ -221,11 +238,12 @@ class CIM_OT_CImport(bpy.types.Operator):
     
 class OBJECT_PT_InPanel(bpy.types.Panel):
 
-    bl_label = "VSE Indic 0.1.0"
+    bl_label = "VSE Indic"
     bl_idname = "OBJECT_PT_VSEIndic"
     bl_category = "VSE Indic"
     bl_space_type = 'SEQUENCE_EDITOR'
     bl_region_type = 'UI'
+    bl_order = 0
 #    bl_context = "objectmode"
 
     
@@ -241,6 +259,7 @@ class OBJECT_PT_InPanel(bpy.types.Panel):
         row = layout.row(align=True)
         row.prop(intool, "in_width")
         row.prop(intool, "in_dur")
+        row.prop(intool, "in_track")
         
         row = layout.row(align=True)
         row.prop(intool, "in_fontlist", icon='FILE_FONT')
@@ -255,15 +274,54 @@ class OBJECT_PT_InPanel(bpy.types.Panel):
 
         layout.operator("create.indic", text = "Create Indic Text", icon='TEXT')
         layout.operator("update.current", text = "Update Current Text", icon='FILE_TICK')
+
+
+class OBJECT_PT_InImpPanel(bpy.types.Panel):
+
+    bl_label = "Import From File"
+    bl_idname = "OBJECT_PT_VSEIndicImp"
+    bl_category = "VSE Indic"
+    bl_space_type = 'SEQUENCE_EDITOR'
+    bl_region_type = 'UI'
+    bl_parent_id = "OBJECT_PT_VSEIndic"
+    bl_order = 1
+
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        intool = scene.in_tool
+
+        layout.prop(intool, "in_fit")
+        row = layout.row(align=True)
+        row.prop(intool, "in_fit1")
+        row.prop(intool, "in_fit2")
         
         row = layout.row(align=True)
         row.prop(intool, "in_sep")
         row.operator("import.text", text = "Import Text", icon='TEXT')
         
-        layout.label(text = " ")
+
+class OBJECT_PT_InHelpPanel(bpy.types.Panel):
+
+    bl_label = "Help"
+    bl_idname = "OBJECT_PT_VSEIndicHelp"
+    bl_category = "VSE Indic"
+    bl_space_type = 'SEQUENCE_EDITOR'
+    bl_region_type = 'UI'
+    bl_parent_id = "OBJECT_PT_VSEIndic"
+    bl_order = 2
+#    bl_options = "DEFAULT_CLOSED"
+#    bl_context = "objectmode"
+
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        intool = scene.in_tool
+
         row = layout.row(align=True)
         row.operator("wm.url_open", text="Help | Source | Updates", icon='QUESTION').url = "https://github.com/oormicreations/VSEIndic"
-
 
 
 class CCProperties(PropertyGroup):
@@ -298,6 +356,14 @@ class CCProperties(PropertyGroup):
         max = 10000
       )
       
+    in_track: IntProperty(
+        name = "Track",
+        description = "Track number",
+        default = 1,
+        min = 1,
+        max = 32
+      )
+            
     in_blur: FloatProperty(
         name = "Blur",
         description = "Blur for shadows etc",
@@ -343,6 +409,26 @@ class CCProperties(PropertyGroup):
          default = (1.0,1.0,1.0,1.0)
      )
 
+    in_fit: BoolProperty(
+        name = "Fit in range:",
+        description = "Fit imported text in a given frame range",
+        default = True
+    )
+
+    in_fit1: IntProperty(
+        name = "",
+        description = "Frame range start",
+        default = 1,
+        min = 1
+      )
+      
+    in_fit2: IntProperty(
+        name = "",
+        description = "Frame range end",
+        default = 1000,
+        min = 1
+      )
+
 # ------------------------------------------------------------------------
 #    Registration
 # ------------------------------------------------------------------------
@@ -353,7 +439,9 @@ classes = (
     CCI_OT_CCreateIndic,
     COF_OT_COpenFont,
     CUC_OT_CUpdateCurrent,
-    CIM_OT_CImport
+    CIM_OT_CImport,
+    OBJECT_PT_InImpPanel,
+    OBJECT_PT_InHelpPanel
 )
 
 def register():
@@ -368,7 +456,7 @@ def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
         unregister_class(cls)
-    del bpy.types.Scene.vsr_tool
+    del bpy.types.Scene.in_tool
 
 
 
