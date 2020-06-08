@@ -82,7 +82,7 @@ To display line breaks, just insert **\n** in the text. If the pasted text has l
 
 _The pasted text may not appear in the text box correctly, or can appear as boxes, but nothing to worry, the addon will render it correctly._
 
-You can set the **Size** (in DPI), **Alignment**, **Width** of text (in % of rendered video's width) and **Duration** of the strip. You can also select a **Font** from the drop down box or load a font file from **Open** button. You can set the text **Color** by clicking on the color swatch.
+You can set the **Size** (in DPI), **Alignment**, **Width** of text (in % of rendered video's width), **Duration** of the strip and **Track** number. You can also select a **Font** from the drop down box or load a font file from **Open** button. You can set the text **Color** by clicking on the color swatch.
 
 The **Blur** feature blurs the text, which should be useful for adding soft shadows to the text, by placing the blurred version of text below the unblurred strip. Change the color to something darker and adjust the Opacity and Offset of the blurred strip to get the desired effect.
 
@@ -92,6 +92,8 @@ You can make more changes and click **Update Current Text** to update it.
 
 You can import unicode text from a file and produce a sequence of hundreds of text strips in a single click by clicking the **Import Text** button. Specify the **Separator** character in the neighbouring box. If you wish to import one line per strip just type **\n** as separator.
 
+**Fit in range** will automatically fit the imported text within the specified range of frames. (Duration setting will be ignored).
+
 
 **Help | Source | Updates** brings you to this page on GitHub.
 
@@ -100,8 +102,6 @@ You can import unicode text from a file and produce a sequence of hundreds of te
 * You will need unicode fonts installed for the text to show up correctly. All fonts may not work. For Indic languages **Sanskrit2003.ttf** works nicely. It can be freely downloaded from many websites.
 
 * The generated text images are saved in a folder named **vseindic** in the same folder as your blend file. The images are named either serially or with date-time. These are **not** temporary images, if you delete them, your blend file will become useless.
-
-* The addon adds the strips on track #1 by default. If you have some stuff there, Blender will shift the new strip to another track.
 
 * The cursor advances to the end of newly added strip automatically, so the next text gets sequenced after it.
 
