@@ -1,5 +1,6 @@
 # VSE Indic
 A free and open source addon for Blender. It renders text in Indic or any other complex languages accurately in Blender's video sequence editor.
+It also has some utilities for creation of guides, vignettes and shapes as VS strips.
 
 ---
 
@@ -20,6 +21,9 @@ A free and open source addon for Blender. It renders text in Indic or any other 
 * Alignment
 * Colors, soft shadows, fonts etc
 * Imports from a text file and sequences the text slides (e.g for slides or subtitles)
+* Create guides for good compositions
+* Create vignette
+* Create shapes like rounded rectangles, lines or circles.
 
 **Intro**
 
@@ -28,7 +32,7 @@ Current Blender cannot render Indic text or any other complex unicode text prope
 
 **Intro Video**
 
-Coming soon
+https://youtu.be/yff0hB3AFzY
 
 
 **Download and Installation**
@@ -94,6 +98,17 @@ You can import unicode text from a file and produce a sequence of hundreds of te
 
 **Fit in range** will automatically fit the imported text within the specified range of frames. (Duration setting will be ignored).
 
+![update](update01.jpg)
+
+From version 0.2.0 onward you can create **Guides** of three kinds - **Center Cross**, **Golden Ratio** and **Thirds** for great looking compositions. You can specify the **Line Size** of the guide lines.
+
+You can create **Vignette** of two kinds - **Corner** and **Box** to overlay on your composition. You can adjust the **Color**, **Density** and **Size** of the vignette.
+
+Note that there can be only one strip of the guides and vignette kind. You do not need more, and if you do, just duplicate them.
+
+You can create simple **Shapes** in VSEIndic now. Such as rectangles, rounded rectangles, lines and circles. Specify the **Width** and **Height** in pixels of your shape. **Color** and **Roundedness** can be adjusted also. You can create as many shapes as you like and can also **Update Shape** if needed.
+
+To create a horizontal line, simply make the height of the rectangle very small, for vertical lines, make width very small. For circles, make the width and height equal and set roundedness to 100%
 
 **Help | Source | Updates** brings you to this page on GitHub.
 
@@ -109,6 +124,8 @@ You can import unicode text from a file and produce a sequence of hundreds of te
 **Known Issues**
 
 * The color may appear darker than the value set.
+* Shape are not antialiased at this time.
+* The functions for Vignette and shapes are not optimized at this time.
 * **Always save your stuff!**
 
 
