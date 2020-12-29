@@ -5,7 +5,7 @@ It also has some utilities for creation of guides, vignettes and shapes as VS st
 ---
 
 ![indic](indic.png)
-
+![indic](update01.png)
 ---
 
 **Requirements**
@@ -75,6 +75,8 @@ Some versions of Blender may not show the UI or addon. Try installing the python
 
 
 **Usage**
+
+Save your blend file first.
 
 Just click the **Create Indic Text** button!
 
