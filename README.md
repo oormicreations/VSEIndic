@@ -5,7 +5,7 @@ It also has some utilities for creation of guides, vignettes and shapes as VS st
 ---
 
 ![indic](indic.png)
-![indic](update01.png)
+![indic](update01.jpg)
 ---
 
 **Requirements**
