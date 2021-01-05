@@ -114,6 +114,8 @@ To create a horizontal line, simply make the height of the rectangle very small,
 
 **Help | Source | Updates** brings you to this page on GitHub.
 
+**Create Index** creates an index of chapters and their timecodes out of the specified track. It is printed in the console. You can copy it from there, and use it on YouTube, for example.
+
 **Notes**
 
 * You will need unicode fonts installed for the text to show up correctly. All fonts may not work. For Indic languages **Sanskrit2003.ttf** works nicely. It can be freely downloaded from many websites.
