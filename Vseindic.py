@@ -6,7 +6,7 @@ bl_info = {
     "name": "VSE Indic",
     "description": "Renders Indic Text in VSE",
     "author": "Oormi Creations",
-    "version": (0, 2, 2),
+    "version": (0, 2, 3),
     "blender": (2, 80, 0),
     "location": "Video Sequencer > VSE Indic",
     "warning": "", # used for warning icon and text in addons panel
@@ -52,6 +52,7 @@ def ShowMessageBox(message = "", title = "VSEIndic Says...", icon = 'INFO'):
         self.layout.label(text=message)
 
     bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
+
 
 def SaveCheck():
     if len(bpy.context.blend_data.filepath)>0:
@@ -189,7 +190,7 @@ def genshape(pix, w, h, col, round):
 def createshape(intool, update):
     if not SaveCheck():
         return None
-    
+
     dir = bpy.path.abspath("//")
     outdir = dir + "vseindic"
     if not os.path.exists(outdir):
@@ -273,7 +274,7 @@ def popfonts(self, context):
 def createindictext(tool, update, imp):
     if not SaveCheck():
         return None
-    
+        
     dir = bpy.path.abspath("//")
     outdir = dir + "vseindic"
     if not os.path.exists(outdir):
@@ -333,6 +334,7 @@ def createindictext(tool, update, imp):
     else:
         seq.transform.scale_x = image.width/bpy.context.scene.render.resolution_x
         seq.transform.scale_y = seq.transform.scale_x
+
 
     #set current frame to position next image
     if imp is not None:
@@ -537,7 +539,7 @@ class CCV_OT_CCreateVig(bpy.types.Operator):
         
         if not SaveCheck():
             return {'FINISHED'}
-        
+                
         iname  = 'VSEIndicImageVig'
         iwidth  = bpy.context.scene.render.resolution_x
         iheight = bpy.context.scene.render.resolution_y
@@ -619,7 +621,38 @@ class CUS_OT_CUpdateShape(bpy.types.Operator):
         
 
         return{'FINISHED'}
-    
+
+class CCI_OT_CCreateIndex(bpy.types.Operator):
+    bl_idname = "create.index"
+    bl_label = "Create Index"
+    bl_description = "Create Time Index from a track."
+
+    def execute(self, context):
+        scene = context.scene
+        intool = scene.in_tool
+
+        fps = scene.render.fps / scene.render.fps_base
+
+        indexitem = None
+        indexlist = []
+
+        seq = bpy.context.scene.sequence_editor.sequences_all
+        for s in seq:
+            if s.type == 'TEXT':
+                if s.channel == intool.in_indtrack:
+                    #print(s.frame_start, s.text)
+                    indexitem = (s.frame_final_start/fps, s.text)
+                    indexlist.append(indexitem)
+
+        indexlist.sort(key = lambda x: x[0])
+
+        for i in indexlist:
+            min = i[0]/60
+            #print(int(min),':', int((min%1)*60), i[1])
+            print("%02d:%02d %s" %(int(min), int((min%1)*60), i[1]))
+                
+
+        return{'FINISHED'}    
     
 # Panel ###############################################
     
@@ -769,6 +802,30 @@ class OBJECT_PT_ShapePanel(bpy.types.Panel):
         
         layout.operator("create.shape", text = "Create Shape", icon='SOLO_ON')
         layout.operator("update.shape", text = "Update Shape", icon='SOLO_OFF')
+
+class OBJECT_PT_IndexPanel(bpy.types.Panel):
+
+    bl_label = "Index"
+    bl_idname = "OBJECT_PT_VSEIndicIndex"
+    bl_category = "VSE Indic"
+    bl_space_type = 'SEQUENCE_EDITOR'
+    bl_region_type = 'UI'
+    bl_parent_id = "OBJECT_PT_VSEIndic"
+    bl_order = 5
+
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        intool = scene.in_tool
+
+        row = layout.row(align=True)
+        row.prop(intool, "in_indtrack")
+        #row.prop(intool, "in_shr")
+        
+        layout.operator("create.index", text = "Create Index", icon='TEXT')
+
+
         
 
 class OBJECT_PT_InHelpPanel(bpy.types.Panel):
@@ -779,7 +836,7 @@ class OBJECT_PT_InHelpPanel(bpy.types.Panel):
     bl_space_type = 'SEQUENCE_EDITOR'
     bl_region_type = 'UI'
     bl_parent_id = "OBJECT_PT_VSEIndic"
-    bl_order = 5
+    bl_order = 6
 #    bl_options = "DEFAULT_CLOSED"
 #    bl_context = "objectmode"
 
@@ -988,6 +1045,13 @@ class CCProperties(PropertyGroup):
          default = (0.5,0.0,0.0,1.0)
      )
 
+    in_indtrack: IntProperty(
+        name = "Track",
+        description = "Track number for index creation",
+        default = 1,
+        min = 1,
+        max = 32
+      )
 
 # ------------------------------------------------------------------------
 #    Registration
@@ -1008,7 +1072,9 @@ classes = (
     CCV_OT_CCreateVig,
     OBJECT_PT_ShapePanel,
     CCS_OT_CCreateShape,
-    CUS_OT_CUpdateShape
+    CUS_OT_CUpdateShape,
+    OBJECT_PT_IndexPanel,
+    CCI_OT_CCreateIndex
 )
 
 def register():
